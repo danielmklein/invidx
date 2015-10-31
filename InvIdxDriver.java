@@ -37,67 +37,46 @@ import org.apache.hadoop.util.ToolRunner;
 /
 /  BUT I should rewrite the driver so that user can specify term as command line arg.
 /  So the args should be <inputfilepath> <term to show indx>
-/  
+/
 /  For simplicity, Driver should just blow away results from previous invidx MR job.
 */
 public class InvIdxDriver extends Configured implements Tool {
 
-    private static NumberFormat nf = new DecimalFormat("00");
-    private Integer numNodes;
-    private Integer numEdges;
-    private Integer numIterations;
-    private Map<String, List<String>> outlinks;
-    private Map<String, Float> pageranks;
-
     public static void main(String[] args) throws Exception {
-        System.exit(ToolRunner.run(new Configuration(), new PageRankDriver(), args));
+        System.exit(ToolRunner.run(new Configuration(), new InvIdxDriver(), args));
     }
 
     @Override
     public int run(String[] args) throws Exception {
-        String inputFilePath = args[0];
+        String inPath = args[0];
         boolean isCompleted;
-        String lastResultPath = null;
-        System.out.println("DRIVER: Constructing initial input file...");
-        // prepareInitialInputFile() takes graph.txt (or other input file) and rewrites it in
-        // the format that my mapper is expecting.
-        prepareInitialInputFile(inputFilePath);
-        System.out.println("DRIVER: Initial input file complete.");
-
-        for (int curRun = 1; curRun <= this.numIterations; curRun++) {
-            System.out.println("DRIVER: Executing iteration " + curRun + " of " + this.numIterations);
-            String inPath = "/pagerank/input/iter" + nf.format(curRun);
-            lastResultPath = "/pagerank/input/iter" + nf.format(curRun + 1);
-            isCompleted = calculate(inPath, lastResultPath);
-            if (!isCompleted)
-            {
-              System.out.println("DRIVER: something went wrong with the MapReduce job.");
-              return 1;
-            }
-            if (curRun < this.numIterations)
-            {
-              // transformOutputFile() takes the MR job output and rewrites it
-              // to the format that my mapper is expecting.
-              transformOutputFile(lastResultPath);
-            }
+        System.out.println("DRIVER: Executing inverted index MapReduce job, using " + inPath + " for input.");
+        String outPath = "/invidx/output";
+        isCompleted = calculate(inPath, outPath);
+        if (!isCompleted)
+        {
+          System.out.println("DRIVER: something went wrong with the MapReduce job.");
+          return 1;
         }
 
         return 0;
     }
 
-    private Configuration createConfig()
+    /*private Configuration createConfig()
     {
       Configuration config = new Configuration();
       config.addResource(new Path("/HADOOP_HOME/conf/core-site.xml"));
       config.addResource(new Path("/HADOOP_HOME/conf/hdfs-site.xml"));
       return config;
-    }
+    }*/
+
+
 
     /*
     // Read the initial input file, save the graph structure, and rewrite it
     // into the first input file for map reduce.
     */
-    private void prepareInitialInputFile(String initInputPath) throws Exception, IOException
+    /*private void prepareInitialInputFile(String initInputPath) throws Exception, IOException
     {
       Configuration config = createConfig();
       String fromNodeId;
@@ -152,7 +131,7 @@ public class InvIdxDriver extends Configured implements Tool {
       // rewriteOutput() performs the actual writing of the graph structure
       // with pagerank values to the file.
       rewriteOutput("/pagerank/input/iter01");
-    }
+    }*/
 
     /*
     // Read in the new pagerank value for each node from the output file,
@@ -160,7 +139,7 @@ public class InvIdxDriver extends Configured implements Tool {
     // Then use that table and the outlinks table to rewrite a new input
     // file for the next iteration.
     */
-    private void transformOutputFile(String outputDir)
+    /*private void transformOutputFile(String outputDir)
     {
         System.out.println("DRIVER: rewriting output from previous iteration to include graph structure.");
         Configuration config = createConfig();
@@ -192,9 +171,9 @@ public class InvIdxDriver extends Configured implements Tool {
           } catch (IOException e) {}
         }
         rewriteOutput(outputPath);
-    }
+    }*/
 
-    private void rewriteOutput(String outputPath)
+    /*private void rewriteOutput(String outputPath)
     {
       Configuration config = createConfig();
       // write everything from the outlinks table and pageranks tables
@@ -230,7 +209,7 @@ public class InvIdxDriver extends Configured implements Tool {
         } catch (IOException e) {}
       }
       System.out.println("DRIVER: finished rewriting previous iteration's output.");
-    }
+    }*/
 
     /*
     // This method actually sets up and runs the mapreduce job.
@@ -238,18 +217,18 @@ public class InvIdxDriver extends Configured implements Tool {
     private boolean calculate(String inputPath, String outputPath) throws IOException, ClassNotFoundException, InterruptedException
     {
         Configuration conf = createConfig();
-        Job pageRank = Job.getInstance(conf, "PageRank");
-        pageRank.setJarByClass(PageRankDriver.class);
-        pageRank.setInputFormatClass(NLineInputFormat.class);
-        pageRank.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", 1);
-        pageRank.setOutputKeyClass(Text.class);
-        pageRank.setOutputValueClass(FloatWritable.class);
-        pageRank.setOutputFormatClass(TextOutputFormat.class);
-        pageRank.setMapperClass(PageRankMapper.class);
-        pageRank.setReducerClass(PageRankReduce.class);
-        FileInputFormat.setInputPaths(pageRank, new Path(inputPath));
-        FileOutputFormat.setOutputPath(pageRank, new Path(outputPath));
+        Job invIdx = Job.getInstance(conf, "InvIdx");
+        invIdx.setJarByClass(InvIdxDriver.class);
+        invIdx.setInputFormatClass(NLineInputFormat.class);
+        invIdx.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", 1);
+        invIdx.setOutputKeyClass(Text.class);
+        invIdx.setOutputValueClass(Text.class);
+        invIdx.setOutputFormatClass(TextOutputFormat.class);
+        invIdx.setMapperClass(InvIdxMapper.class);
+        invIdx.setReducerClass(InvIdxReduce.class);
+        FileInputFormat.setInputPaths(invIdx, new Path(inputPath));
+        FileOutputFormat.setOutputPath(invIdx, new Path(outputPath));
 
-        return pageRank.waitForCompletion(true);
+        return invIdx.waitForCompletion(true);
     }
 }
