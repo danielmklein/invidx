@@ -5,7 +5,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
-public class InvIdxReduce extends Reducer<Text, FloatWritable, Text, FloatWritable> {
+public class InvIdxReduce extends Reducer<Text, IntWritable, Text, Text> {
 
   /*
   / reducer expects term key with list of docno's.
@@ -24,7 +24,7 @@ public class InvIdxReduce extends Reducer<Text, FloatWritable, Text, FloatWritab
   */
 
   @Override
-  public void reduce(Text term, Iterable<IntWritable> docnos, Context context)
+  public void reduce(Text term, Iterable<IntWritable> docNos, Context context)
                     throws IOException, InterruptedException
   {
     System.out.print("REDUCER: term " + term + " is found in the following docs: ");
@@ -49,18 +49,18 @@ public class InvIdxReduce extends Reducer<Text, FloatWritable, Text, FloatWritab
     // df (document frequency) is the number of distinct docs in which current term appears.
     Integer df = termFreqs.keySet().size();
 
-    List<Integer> sortedDocNos = new List<Integer>();
+    List<Integer> sortedDocNos = new ArrayList<Integer>();
     sortedDocNos.addAll(termFreqs.keySet());
     Collections.sort(sortedDocNos);
 
     StringBuilder sb = new StringBuilder();
     sb.append(": ").append(df).append(" : ");
 
-    Integer docNo;
+    Integer doc;
     for (int i = 0; i < sortedDocNos.size(); i++)
     {
-      Integer docNo = sortedDocNos.get(i);
-      sb.append("(").append(docNo).append(",").append(termFreqs.get(docNo)).append(")");
+      doc = sortedDocNos.get(i);
+      sb.append("(").append(doc).append(",").append(termFreqs.get(doc)).append(")");
       if (i + 1 < sortedDocNos.size())
       {
         sb.append(", ");

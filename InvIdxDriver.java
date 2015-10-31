@@ -62,13 +62,13 @@ public class InvIdxDriver extends Configured implements Tool {
         return 0;
     }
 
-    /*private Configuration createConfig()
+    private Configuration createConfig()
     {
       Configuration config = new Configuration();
       config.addResource(new Path("/HADOOP_HOME/conf/core-site.xml"));
       config.addResource(new Path("/HADOOP_HOME/conf/hdfs-site.xml"));
       return config;
-    }*/
+    }
 
 
 
