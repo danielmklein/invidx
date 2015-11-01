@@ -221,8 +221,8 @@ public class InvIdxDriver extends Configured implements Tool {
         invIdx.setJarByClass(InvIdxDriver.class);
         invIdx.setInputFormatClass(NLineInputFormat.class);
         invIdx.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", 1);
-        job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(IntWritable.class);
+        invIdx.setMapOutputKeyClass(Text.class);
+        invIdx.setMapOutputValueClass(IntWritable.class);
         invIdx.setOutputKeyClass(Text.class);
         invIdx.setOutputValueClass(Text.class);
         invIdx.setOutputFormatClass(TextOutputFormat.class);
