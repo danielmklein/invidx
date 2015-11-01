@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -221,6 +221,8 @@ public class InvIdxDriver extends Configured implements Tool {
         invIdx.setJarByClass(InvIdxDriver.class);
         invIdx.setInputFormatClass(NLineInputFormat.class);
         invIdx.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", 1);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(IntWritable.class);
         invIdx.setOutputKeyClass(Text.class);
         invIdx.setOutputValueClass(Text.class);
         invIdx.setOutputFormatClass(TextOutputFormat.class);
