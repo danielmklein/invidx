@@ -94,7 +94,8 @@ public class InvIdxDriver extends Configured implements Tool {
         {
           if (line.startsWith(term + " "))
           {
-            return line;
+            outString = line;
+            break;
           }
           line = br.readLine();
         }
@@ -106,6 +107,8 @@ public class InvIdxDriver extends Configured implements Tool {
           if (br != null) br.close();
         } catch (IOException e) {}
       }
+
+      return outString;
     }
 
     /*
