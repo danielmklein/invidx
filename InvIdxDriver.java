@@ -1,21 +1,17 @@
 /*
 / building and running:
 / $ HADOOP_CLASSPATH="$(hadoop classpath)"
-/ $ mkdir pagerank_classes
+/ $ mkdir invidx_classes
 / $ javac -classpath ${HADOOP_CLASSPATH} -d invidx_classes *.java
 / $ jar -cvf /home/hadoop/InvIdx.jar -C invidx_classes/ .
 /
-/ $ hadoop jar ./InvIdx.jar InvIdxDriver /pagerank/graph.txt
+/ $ hadoop jar ./InvIdx.jar InvIdxDriver /merchants.txt us
 **/
 
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
 import java.util.*;
-import java.text.NumberFormat;
-import java.text.DecimalFormat;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -31,15 +27,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-/*
-/  TODO: rewrite mapper, reducer, and driver
-/  I suspect that most or all of the file rewriting will not be necessary for this.
-/
-/  BUT I should rewrite the driver so that user can specify term as command line arg.
-/  So the args should be <inputfilepath> <term to show indx>
-/
-/  For simplicity, Driver should just blow away results from previous invidx MR job.
-*/
+
 public class InvIdxDriver extends Configured implements Tool {
 
     public static void main(String[] args) throws Exception {
@@ -93,10 +81,8 @@ public class InvIdxDriver extends Configured implements Tool {
         String line = br.readLine();
         while (line != null)
         {
-          System.out.println("DRIVER: current line is **" + line + "**");
           if (line.startsWith(term + " ") || line.startsWith(term + "\t"))
           {
-            System.out.println("DRIVER: matched term in above line.");
             outString = line;
             break;
           }
@@ -134,6 +120,6 @@ public class InvIdxDriver extends Configured implements Tool {
         FileInputFormat.setInputPaths(invIdx, new Path(inputPath));
         FileOutputFormat.setOutputPath(invIdx, new Path(outputPath));
 
-        return invIdx.waitForCompletion(true);
+        return invIdx.waitForCompletion(false);
     }
 }

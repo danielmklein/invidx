@@ -6,8 +6,8 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
-public class InvIdxMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
-
+public class InvIdxMapper extends Mapper<LongWritable, Text, Text, IntWritable>
+{
   private Text word = new Text();
 
   @Override

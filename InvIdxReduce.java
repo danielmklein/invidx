@@ -5,23 +5,8 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
-public class InvIdxReduce extends Reducer<Text, IntWritable, Text, Text> {
-
-  /*
-  / reducer expects term key with list of docno's.
-  / create map of docno:tf pairs (let's call it metrics)
-  / for docno in docnos:
-  /    if docno already in metrics:
-  /        metrics.put(docno, metrics.get(docno)+1)
-  /    else:
-  /        metrics.put(docno, 1)
-  /
-  / then, we need to build a result_string of the format:
-  / ": 4 : (1, 1), (2, 1), (3, 1), (4, 1)"
-  /
-  / : df : [(metrics.get(docno)) for docno in metrics.keyset().sorted()]
-  / finally, emit (term, result_string)
-  */
+public class InvIdxReduce extends Reducer<Text, IntWritable, Text, Text>
+{
 
   @Override
   public void reduce(Text term, Iterable<IntWritable> docNos, Context context)
