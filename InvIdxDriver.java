@@ -49,15 +49,25 @@ public class InvIdxDriver extends Configured implements Tool {
     @Override
     public int run(String[] args) throws Exception {
         String inPath = args[0];
+        String termToQuery = args[1];
         boolean isCompleted;
         System.out.println("DRIVER: Executing inverted index MapReduce job, using " + inPath + " for input.");
         String outPath = "/invidx/output";
+        String outputFile = "/invidx/output/part-r-00000";
+
+        FileSystem fs = FileSystem.get(createConfig());
+        fs.delete(new Path(outputPath), true); // blow away the leftover output directory and its contents.
+
         isCompleted = calculate(inPath, outPath);
         if (!isCompleted)
         {
           System.out.println("DRIVER: something went wrong with the MapReduce job.");
           return 1;
         }
+
+        String outString = searchOutputFile(outputFile, termToQuery);
+        System.out.println("DRIVER: result is: " + outString);
+        System.out.println(outString);
 
         return 0;
     }
@@ -70,52 +80,22 @@ public class InvIdxDriver extends Configured implements Tool {
       return config;
     }
 
-
-
-    /*
-    // Read the initial input file, save the graph structure, and rewrite it
-    // into the first input file for map reduce.
-    */
-    /*private void prepareInitialInputFile(String initInputPath) throws Exception, IOException
+    private String searchOutputFile(outputFile, term)
     {
-      Configuration config = createConfig();
-      String fromNodeId;
-      String toNodeId;
-      this.outlinks = new HashMap<String, List<String>>();
-      this.pageranks = new HashMap<String, Float>();
-      FileSystem fs = FileSystem.get(config);
-      Path path = new Path(initInputPath);
+      FileSystem fs = FileSystem.get(createConfig(););
+      Path path = new Path(outputFile);
       BufferedReader br = null;
+      String outString = "";
       try
       {
         br = new BufferedReader(new InputStreamReader(fs.open(path)));
         String line = br.readLine();
-        this.numNodes = Integer.parseInt(line.split("\\s+")[0]);
-        System.out.println("DRIVER: Number of nodes in graph: " + this.numNodes);
-        this.numEdges = Integer.parseInt(line.split("\\s+")[1]);
-        System.out.println("DRIVER: Number of edges in graph: " + this.numEdges);
-        line = br.readLine();
-        this.numIterations = Integer.parseInt(line.trim());
-        System.out.println("DRIVER: Number of iterations to run: " + numIterations);
-        // initValue is the seed pagerank that each node gets
-        Float initValue = (new Float(1)) / (new Float(this.numNodes));
-        System.out.println("DRIVER: Constructing graph outlink table...");
-        line = br.readLine();
         while (line != null)
         {
-          // parse out the outlink and add it to the proper node
-          fromNodeId = line.split("\\s+")[0].trim();
-          toNodeId = line.split("\\s+")[1].trim();
-          if (this.outlinks.get(fromNodeId) == null)
+          if (line.startsWith(term + " "))
           {
-            // if fromNode not in outlinks table already, add it
-            // and put an initial pagerank in the pageranks table for it
-            System.out.println("DRIVER: Adding node " + fromNodeId + " to table.");
-            this.outlinks.put(fromNodeId, new ArrayList<String>());
-            this.pageranks.put(fromNodeId, initValue);
+            return line;
           }
-          System.out.println("DRIVER: Adding link " + fromNodeId + " -> " + toNodeId);
-          this.outlinks.get(fromNodeId).add(toNodeId);
           line = br.readLine();
         }
       } catch (Exception e)
@@ -126,90 +106,7 @@ public class InvIdxDriver extends Configured implements Tool {
           if (br != null) br.close();
         } catch (IOException e) {}
       }
-      System.out.println("DRIVER: Graph outlink table complete.");
-      System.out.println("DRIVER: Writing initial input file for MapReduce.");
-      // rewriteOutput() performs the actual writing of the graph structure
-      // with pagerank values to the file.
-      rewriteOutput("/pagerank/input/iter01");
-    }*/
-
-    /*
-    // Read in the new pagerank value for each node from the output file,
-    // then store each in the pagerank table (this.pageranks).
-    // Then use that table and the outlinks table to rewrite a new input
-    // file for the next iteration.
-    */
-    /*private void transformOutputFile(String outputDir)
-    {
-        System.out.println("DRIVER: rewriting output from previous iteration to include graph structure.");
-        Configuration config = createConfig();
-        BufferedReader br = null;
-        String outputPath = outputDir + "/part-r-00000";
-        String nid;
-        Float newValue;
-        try
-        {
-          FileSystem fs = FileSystem.get(config);
-          Path path = new Path(outputPath);
-          br = new BufferedReader(new InputStreamReader(fs.open(path)));
-          String line = br.readLine();
-          while (line != null)
-          {
-            // get the new pagerank value for each node and save to table
-            nid = line.split("\\s+")[0].trim();
-            newValue = Float.parseFloat(line.split("\\s+")[1]);
-            System.out.println("DRIVER: new pagerank value for node " + nid + " is " + newValue);
-            this.pageranks.put(nid, newValue);
-            line = br.readLine();
-          }
-        } catch (Exception e)
-        {} finally
-        {
-          try
-          {
-            if (br != null) br.close();
-          } catch (IOException e) {}
-        }
-        rewriteOutput(outputPath);
-    }*/
-
-    /*private void rewriteOutput(String outputPath)
-    {
-      Configuration config = createConfig();
-      // write everything from the outlinks table and pageranks tables
-      // back to the same output file from which we read the pageranks.
-      BufferedWriter bw = null;
-      try
-      {
-        FileSystem fs = FileSystem.get(config);
-        Path path = new Path(outputPath);
-        bw = new BufferedWriter(new OutputStreamWriter(fs.create(path, true)));
-        String line;
-        StringBuilder sb;
-
-        for (String nodeId : this.outlinks.keySet())
-        {
-          sb = new StringBuilder();
-          sb.append(nodeId).append(" ");
-          sb.append(this.pageranks.get(nodeId)).append(" ");
-          for (String outlinkId : this.outlinks.get(nodeId))
-          {
-            sb.append(outlinkId).append(" ");
-          }
-          System.out.println("DRIVER: Writing line: " + sb.toString() + " to file " + outputPath);
-          sb.append("\n");
-          bw.write(sb.toString());
-        }
-      } catch (Exception e)
-      {} finally
-      {
-        try
-        {
-          if (bw != null) bw.close();
-        } catch (IOException e) {}
-      }
-      System.out.println("DRIVER: finished rewriting previous iteration's output.");
-    }*/
+    }
 
     /*
     // This method actually sets up and runs the mapreduce job.
