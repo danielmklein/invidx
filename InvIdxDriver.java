@@ -82,7 +82,7 @@ public class InvIdxDriver extends Configured implements Tool {
 
     private String searchOutputFile(outputFile, term)
     {
-      FileSystem fs = FileSystem.get(createConfig(););
+      FileSystem fs = FileSystem.get(createConfig());
       Path path = new Path(outputFile);
       BufferedReader br = null;
       String outString = "";
