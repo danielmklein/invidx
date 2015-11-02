@@ -86,14 +86,17 @@ public class InvIdxDriver extends Configured implements Tool {
       Path path = new Path(outputFile);
       BufferedReader br = null;
       String outString = "";
+      System.out.println("DRIVER: searching output file for term: " + term);
       try
       {
         br = new BufferedReader(new InputStreamReader(fs.open(path)));
         String line = br.readLine();
         while (line != null)
         {
+          System.out.println("DRIVER: current line is **" + line + "**");
           if (line.startsWith(term + " "))
           {
+            System.out.println("DRIVER: matched term in above line.");
             outString = line;
             break;
           }
