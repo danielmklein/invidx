@@ -52,13 +52,13 @@ public class InvIdxDriver extends Configured implements Tool {
         String termToQuery = args[1];
         boolean isCompleted;
         System.out.println("DRIVER: Executing inverted index MapReduce job, using " + inPath + " for input.");
-        String outPath = "/invidx/output";
+        String outputPath = "/invidx/output";
         String outputFile = "/invidx/output/part-r-00000";
 
         FileSystem fs = FileSystem.get(createConfig());
-        fs.delete(new Path(outputPath), true); // blow away the leftover output directory and its contents.
+        fs.delete((new Path(outputPath)), true); // blow away the leftover output directory and its contents.
 
-        isCompleted = calculate(inPath, outPath);
+        isCompleted = calculate(inPath, outputPath);
         if (!isCompleted)
         {
           System.out.println("DRIVER: something went wrong with the MapReduce job.");
