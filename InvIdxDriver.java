@@ -49,7 +49,7 @@ public class InvIdxDriver extends Configured implements Tool {
     @Override
     public int run(String[] args) throws Exception {
         String inPath = args[0];
-        String termToQuery = args[1];
+        String termToQuery = args[1].trim();
         boolean isCompleted;
         System.out.println("DRIVER: Executing inverted index MapReduce job, using " + inPath + " for input.");
         String outputPath = "/invidx/output";
@@ -94,7 +94,7 @@ public class InvIdxDriver extends Configured implements Tool {
         while (line != null)
         {
           System.out.println("DRIVER: current line is **" + line + "**");
-          if (line.startsWith(term + " "))
+          if (line.startsWith(term + " ") || line.startsWith(term + "\t"))
           {
             System.out.println("DRIVER: matched term in above line.");
             outString = line;
