@@ -7,20 +7,24 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 public class InvIdxReduce extends Reducer<Text, IntWritable, Text, Text>
 {
-
+  /*
+  / This reducer expects a key (a term for which to calculate metrics), along with
+  / a list of doc numbers. It builds a map of (docno, termfreq) pairs for the
+  / given term, and uses this to calculate the document frequency for the term.
+  / Finally, we build an output string containing the doc freq for the term along
+  / with the tf for the term for each doc in which it appears.
+  */
   @Override
   public void reduce(Text term, Iterable<IntWritable> docNos, Context context)
                     throws IOException, InterruptedException
   {
-    System.out.print("REDUCER: term " + term + " is found in the following docs: ");
+    System.out.println("REDUCER: term " + term + " is found in the following docs: ");
 
     Map<Integer, Integer> termFreqs = new HashMap<Integer, Integer>();
-
     for (IntWritable docNo : docNos)
     {
       System.out.print(docNo + " ");
       Integer pojoDocNo = docNo.get();
-      // Compile the term freq for our current term for each document.
       Integer oldTf = termFreqs.get(pojoDocNo);
       if (oldTf == null)
       {
@@ -30,17 +34,14 @@ public class InvIdxReduce extends Reducer<Text, IntWritable, Text, Text>
         termFreqs.put(pojoDocNo, oldTf+1);
       }
     }
-
-    // df (document frequency) is the number of distinct docs in which current term appears.
-    Integer df = termFreqs.keySet().size();
+    System.out.print("\n");
 
     List<Integer> sortedDocNos = new ArrayList<Integer>();
     sortedDocNos.addAll(termFreqs.keySet());
     Collections.sort(sortedDocNos);
-
     StringBuilder sb = new StringBuilder();
+    Integer df = sortedDocNos.size();
     sb.append(": ").append(df).append(" : ");
-
     Integer doc;
     for (int i = 0; i < sortedDocNos.size(); i++)
     {
@@ -51,8 +52,6 @@ public class InvIdxReduce extends Reducer<Text, IntWritable, Text, Text>
         sb.append(", ");
       }
     }
-
-    System.out.println("REDUCER: final output line for term " + term + " is " + sb.toString());
 
     context.write(term, new Text(sb.toString()));
   }

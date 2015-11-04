@@ -10,6 +10,11 @@ public class InvIdxMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 {
   private Text word = new Text();
 
+  /*
+  / This mapper expects a line of the format "docno: term1 term2 ... termn",
+  / extracts the docno from the line, and then for each term,
+  / emits (term, docno).
+  */
   @Override
   public void map(LongWritable key, Text value, Context context)
                   throws IOException, InterruptedException
