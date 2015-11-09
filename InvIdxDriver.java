@@ -61,10 +61,10 @@ public class InvIdxDriver extends Configured implements Tool {
         String resultString = "";
         if (termToQuery.equals(""))
         {
-          resultString = searchOutputFile(outputFile, termToQuery);
+          resultString = getFullOutput(outputFile);
         } else
         {
-          resultString = getFullOutput(outputFile);
+          resultString = searchOutputFile(outputFile, termToQuery);
         }
         System.out.println("DRIVER: result is: " + resultString);
         System.out.println(resultString);
