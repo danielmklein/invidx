@@ -35,14 +35,21 @@ public class InvIdxDriver extends Configured implements Tool {
 
     @Override
     public int run(String[] args) throws Exception {
+        // TODO: this inPath might get hardcoded, in which case I will need to
+        // change termToQuery to look at args[0]
         String inPath = args[0]; // first arg is the path of the input file.
-        String termToQuery = args[1].trim(); // second arg is the term for which to print result.
+        String termToQuery = "";
+        if (args.length > 1)
+        {
+          termToQuery = args[1].trim(); // second arg is the term for which to print result.
+        }
         System.out.println("DRIVER: Executing inverted index MapReduce job, using " + inPath + " for input.");
         String outputPath = "/invidx/output";
         String outputFile = "/invidx/output/part-r-00000";
 
+        // blow away the leftover output directory and its contents.
         FileSystem fs = FileSystem.get(createConfig());
-        fs.delete((new Path(outputPath)), true); // blow away the leftover output directory and its contents.
+        fs.delete((new Path(outputPath)), true);
 
         boolean successful = calculate(inPath, outputPath);
         if (!successful)
@@ -51,7 +58,14 @@ public class InvIdxDriver extends Configured implements Tool {
           return 1;
         }
 
-        String resultString = searchOutputFile(outputFile, termToQuery);
+        String resultString = "";
+        if (termToQuery.equals(""))
+        {
+          resultString = searchOutputFile(outputFile, termToQuery);
+        } else
+        {
+          resultString = getFullOutput(outputFile);
+        }
         System.out.println("DRIVER: result is: " + resultString);
         System.out.println(resultString);
 
@@ -64,6 +78,37 @@ public class InvIdxDriver extends Configured implements Tool {
       config.addResource(new Path("/HADOOP_HOME/conf/core-site.xml"));
       config.addResource(new Path("/HADOOP_HOME/conf/hdfs-site.xml"));
       return config;
+    }
+
+    /*
+    /  Read output file and return a string containing its entire contents.
+    */
+    private String getFullOutput(String outputFile) throws IOException
+    {
+      FileSystem fs = FileSystem.get(createConfig());
+      Path path = new Path(outputFile);
+      BufferedReader br = null;
+      StringBuilder fileSb = new StringBuilder();
+      System.out.println("DRIVER: no term specified, so displaying entire output file.");
+      try
+      {
+        br = new BufferedReader(new InputStreamReader(fs.open(path)));
+        String line = br.readLine();
+        while (line != null)
+        {
+          fileSb.append(line).append("\n");
+          line = br.readLine();
+        }
+      } catch (Exception e)
+      {} finally
+      {
+        try
+        {
+          if (br != null) br.close();
+        } catch (IOException e) {}
+      }
+
+      return fileSb.toString();
     }
 
     /*
