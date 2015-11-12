@@ -10,7 +10,9 @@
 
 import java.io.IOException;
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.InputStreamReader;
+import java.io.BufferedWriter;
 import java.util.*;
 
 import org.apache.hadoop.conf.Configuration;
@@ -37,12 +39,16 @@ public class InvIdxDriver extends Configured implements Tool {
     public int run(String[] args) throws Exception {
         // TODO: this inPath might get hardcoded, in which case I will need to
         // change termToQuery to look at args[0]
-        String inPath = args[0]; // first arg is the path of the input file.
+        String inPath = "input.txt";// args[0]; // first arg is the path of the input file.
         String termToQuery = "";
-        if (args.length > 1)
+        if (args.length > 0)
         {
-          termToQuery = args[1].trim(); // second arg is the term for which to print result.
+          termToQuery = args[0].trim(); // second arg is the term for which to print result.
         }
+
+        String hdfsInPath = "/input.txt";
+        writeInputToHdfs(inPath, hdfsInPath);
+
         System.out.println("DRIVER: Executing inverted index MapReduce job, using " + inPath + " for input.");
         String outputPath = "/invidx/output";
         String outputFile = "/invidx/output/part-r-00000";
@@ -51,7 +57,7 @@ public class InvIdxDriver extends Configured implements Tool {
         FileSystem fs = FileSystem.get(createConfig());
         fs.delete((new Path(outputPath)), true);
 
-        boolean successful = calculate(inPath, outputPath);
+        boolean successful = calculate(hdfsInPath, outputPath);
         if (!successful)
         {
           System.out.println("DRIVER: something went wrong with the MapReduce job.");
@@ -66,7 +72,7 @@ public class InvIdxDriver extends Configured implements Tool {
         {
           resultString = searchOutputFile(outputFile, termToQuery);
         }
-        System.out.println("DRIVER: result is: " + resultString);
+        System.out.println("*** RESULTS ***");
         System.out.println(resultString);
 
         return 0;
@@ -78,6 +84,43 @@ public class InvIdxDriver extends Configured implements Tool {
       config.addResource(new Path("/HADOOP_HOME/conf/core-site.xml"));
       config.addResource(new Path("/HADOOP_HOME/conf/hdfs-site.xml"));
       return config;
+    }
+
+    private void writeInputToHdfs(String localInPath, String hdfsOutPath)
+    {
+      Configuration config = createConfig();
+      BufferedReader br = null;
+      BufferedWriter bw = null;
+      String line;
+      System.out.println("DRIVER: writing local input file to HDFS.");
+
+      try
+      {
+        br = new BufferedReader(new FileReader(localInPath));
+        FileSystem fs = FileSystem.get(config);
+        Path outPath = new Path(hdfsOutPath);
+        bw = new BufferedWriter(new OutputStreamWriter(fs.create(path, true)));
+        line = br.readLine();
+        while (line != null)
+        {
+          System.out.println("DRIVER: writing line " + line + " to input file on HDFS.");
+          bw.write(line);
+          bw.newLine();
+        }
+      } catch (Exception e) {}
+      finally
+      {
+        try
+        {
+          if (br != null) br.close();
+        } catch (IOException e) {}
+        try
+        {
+          if (bw != null) bw.close();
+        } catch (IOException e) {}
+      }
+      System.out.println("DRIVER: finished writing local input file to HDFS.");
+
     }
 
     /*
