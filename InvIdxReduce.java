@@ -18,7 +18,7 @@ public class InvIdxReduce extends Reducer<Text, IntWritable, Text, Text>
   public void reduce(Text term, Iterable<IntWritable> docNos, Context context)
                     throws IOException, InterruptedException
   {
-    System.out.println("REDUCER: term " + term + " is found in the following docs: ");
+    System.out.print("REDUCER: term '" + term + "' is found in the following docs: ");
 
     Map<Integer, Integer> termFreqs = new HashMap<Integer, Integer>();
     for (IntWritable docNo : docNos)

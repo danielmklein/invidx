@@ -38,26 +38,24 @@ public class InvIdxDriver extends Configured implements Tool {
 
     @Override
     public int run(String[] args) throws Exception {
-        // TODO: this inPath might get hardcoded, in which case I will need to
-        // change termToQuery to look at args[0]
-        String inPath = "input.txt";// args[0]; // first arg is the path of the input file.
         String termToQuery = "";
         if (args.length > 0)
         {
           termToQuery = args[0].trim(); // second arg is the term for which to print result.
         }
 
+        String localInPath = "input.txt";
         String hdfsInPath = "/input.txt";
-        writeInputToHdfs(inPath, hdfsInPath);
-
-        System.out.println("DRIVER: Executing inverted index MapReduce job, using " + inPath + " for input.");
         String outputPath = "/invidx/output";
         String outputFile = "/invidx/output/part-r-00000";
 
-        // blow away the leftover output directory and its contents.
+        // blow away the leftover input file and output directory.
         FileSystem fs = FileSystem.get(createConfig());
         fs.delete((new Path(outputPath)), true);
+        fs.delete((new Path(hdfsInPath)), true);
 
+        writeInputToHdfs(localInPath, hdfsInPath);
+        System.out.println("DRIVER: Executing inverted index MapReduce job, using " + inPath + " for input.");
         boolean successful = calculate(hdfsInPath, outputPath);
         if (!successful)
         {
@@ -73,7 +71,7 @@ public class InvIdxDriver extends Configured implements Tool {
         {
           resultString = searchOutputFile(outputFile, termToQuery);
         }
-        System.out.println("\n*** RESULTS ***\n");
+        System.out.println("\n******* RESULTS *******\n");
         System.out.println(resultString);
 
         return 0;
@@ -104,7 +102,7 @@ public class InvIdxDriver extends Configured implements Tool {
         line = br.readLine();
         while (line != null)
         {
-          System.out.println("DRIVER: writing line " + line + " to input file on HDFS.");
+          System.out.println("DRIVER: writing line '" + line + "'");
           bw.write(line);
           bw.newLine();
           line = br.readLine();
