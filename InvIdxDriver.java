@@ -55,7 +55,7 @@ public class InvIdxDriver extends Configured implements Tool {
         fs.delete((new Path(hdfsInPath)), true);
 
         writeInputToHdfs(localInPath, hdfsInPath);
-        System.out.println("DRIVER: Executing inverted index MapReduce job, using " + inPath + " for input.");
+        System.out.println("DRIVER: Executing inverted index MapReduce job, using " + localInPath + " for input.");
         boolean successful = calculate(hdfsInPath, outputPath);
         if (!successful)
         {
