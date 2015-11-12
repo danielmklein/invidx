@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
 import java.util.*;
 
 import org.apache.hadoop.conf.Configuration;
@@ -99,7 +100,7 @@ public class InvIdxDriver extends Configured implements Tool {
         br = new BufferedReader(new FileReader(localInPath));
         FileSystem fs = FileSystem.get(config);
         Path outPath = new Path(hdfsOutPath);
-        bw = new BufferedWriter(new OutputStreamWriter(fs.create(path, true)));
+        bw = new BufferedWriter(new OutputStreamWriter(fs.create(outPath, true)));
         line = br.readLine();
         while (line != null)
         {
