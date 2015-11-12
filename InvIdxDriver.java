@@ -107,6 +107,7 @@ public class InvIdxDriver extends Configured implements Tool {
           System.out.println("DRIVER: writing line " + line + " to input file on HDFS.");
           bw.write(line);
           bw.newLine();
+          line = br.readLine();
         }
       } catch (Exception e) {}
       finally
