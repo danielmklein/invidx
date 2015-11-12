@@ -73,7 +73,7 @@ public class InvIdxDriver extends Configured implements Tool {
         {
           resultString = searchOutputFile(outputFile, termToQuery);
         }
-        System.out.println("*** RESULTS ***");
+        System.out.println("\n*** RESULTS ***\n");
         System.out.println(resultString);
 
         return 0;
