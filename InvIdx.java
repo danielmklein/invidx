@@ -5,7 +5,7 @@
 / $ javac -classpath ${HADOOP_CLASSPATH} -d invidx_classes *.java
 / $ jar -cvf /home/hadoop/InvIdx.jar -C invidx_classes/ .
 /
-/ $ hadoop jar ./InvIdx.jar InvIdxDriver <term>
+/ $ hadoop jar ./InvIdx.jar InvIdx <term>
 **/
 
 import java.io.IOException;
@@ -39,7 +39,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 public class InvIdx extends Configured implements Tool {
 
     public static void main(String[] args) throws Exception {
-        System.exit(ToolRunner.run(new Configuration(), new InvIdxDriver(), args));
+        System.exit(ToolRunner.run(new Configuration(), new InvIdx(), args));
     }
 
     @Override
