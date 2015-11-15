@@ -36,7 +36,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Mapper;
 
-public class InvIdxDriver extends Configured implements Tool {
+public class InvIdx extends Configured implements Tool {
 
     public static void main(String[] args) throws Exception {
         System.exit(ToolRunner.run(new Configuration(), new InvIdxDriver(), args));
@@ -203,7 +203,7 @@ public class InvIdxDriver extends Configured implements Tool {
     {
         Configuration conf = createConfig();
         Job invIdx = Job.getInstance(conf, "InvIdx");
-        invIdx.setJarByClass(InvIdxDriver.class);
+        invIdx.setJarByClass(InvIdx.class);
         invIdx.setInputFormatClass(NLineInputFormat.class);
         invIdx.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", 1);
         invIdx.setMapOutputKeyClass(Text.class);
@@ -218,84 +218,84 @@ public class InvIdxDriver extends Configured implements Tool {
 
         return invIdx.waitForCompletion(false);
     }
+}
 
-    private class InvIdxMapper extends Mapper<LongWritable, Text, Text, IntWritable>
+class InvIdxMapper extends Mapper<LongWritable, Text, Text, IntWritable>
+{
+  private Text word = new Text();
+
+  /*
+  / This mapper expects a line of the format "docno: term1 term2 ... termn",
+  / extracts the docno from the line, and then for each term,
+  / emits (term, docno).
+  */
+  @Override
+  public void map(LongWritable key, Text value, Context context)
+                  throws IOException, InterruptedException
+  {
+    String line = value.toString();
+    List<String> fields = Arrays.asList(line.split("\\s+"));
+    Integer docNo = Integer.parseInt(fields.get(0).replaceAll(":", ""));
+
+    System.out.println("MAPPER: currently processing doc number " + docNo);
+
+    for (String term : fields.subList(1, fields.size()))
     {
-      private Text word = new Text();
+      System.out.println("MAPPER: emitting (term, docno) pair (" + term + "," + docNo + ")");
+      word.set(term.trim());
+      context.write(word, new IntWritable(docNo));
+    }
+  }
+}
 
-      /*
-      / This mapper expects a line of the format "docno: term1 term2 ... termn",
-      / extracts the docno from the line, and then for each term,
-      / emits (term, docno).
-      */
-      @Override
-      public void map(LongWritable key, Text value, Context context)
-                      throws IOException, InterruptedException
+class InvIdxReduce extends Reducer<Text, IntWritable, Text, Text>
+{
+  /*
+  / This reducer expects a key (a term for which to calculate metrics), along with
+  / a list of doc numbers. It builds a map of (docno, termfreq) pairs for the
+  / given term, and uses this to calculate the document frequency for the term.
+  / Finally, we build an output string containing the doc freq for the term along
+  / with the tf for the term for each doc in which it appears.
+  */
+  @Override
+  public void reduce(Text term, Iterable<IntWritable> docNos, Context context)
+                    throws IOException, InterruptedException
+  {
+    System.out.print("REDUCER: term '" + term + "' is found in the following docs: ");
+
+    Map<Integer, Integer> termFreqs = new HashMap<Integer, Integer>();
+    for (IntWritable docNo : docNos)
+    {
+      System.out.print(docNo + " ");
+      Integer pojoDocNo = docNo.get();
+      Integer oldTf = termFreqs.get(pojoDocNo);
+      if (oldTf == null)
       {
-        String line = value.toString();
-        List<String> fields = Arrays.asList(line.split("\\s+"));
-        Integer docNo = Integer.parseInt(fields.get(0).replaceAll(":", ""));
+        termFreqs.put(pojoDocNo, 1);
+      } else
+      {
+        termFreqs.put(pojoDocNo, oldTf+1);
+      }
+    }
+    System.out.print("\n");
 
-        System.out.println("MAPPER: currently processing doc number " + docNo);
-
-        for (String term : fields.subList(1, fields.size()))
-        {
-          System.out.println("MAPPER: emitting (term, docno) pair (" + term + "," + docNo + ")");
-          word.set(term.trim());
-          context.write(word, new IntWritable(docNo));
-        }
+    List<Integer> sortedDocNos = new ArrayList<Integer>();
+    sortedDocNos.addAll(termFreqs.keySet());
+    Collections.sort(sortedDocNos);
+    StringBuilder sb = new StringBuilder();
+    Integer df = sortedDocNos.size();
+    sb.append(": ").append(df).append(" : ");
+    Integer doc;
+    for (int i = 0; i < sortedDocNos.size(); i++)
+    {
+      doc = sortedDocNos.get(i);
+      sb.append("(").append(doc).append(",").append(termFreqs.get(doc)).append(")");
+      if (i + 1 < sortedDocNos.size())
+      {
+        sb.append(", ");
       }
     }
 
-    private class InvIdxReduce extends Reducer<Text, IntWritable, Text, Text>
-    {
-      /*
-      / This reducer expects a key (a term for which to calculate metrics), along with
-      / a list of doc numbers. It builds a map of (docno, termfreq) pairs for the
-      / given term, and uses this to calculate the document frequency for the term.
-      / Finally, we build an output string containing the doc freq for the term along
-      / with the tf for the term for each doc in which it appears.
-      */
-      @Override
-      public void reduce(Text term, Iterable<IntWritable> docNos, Context context)
-                        throws IOException, InterruptedException
-      {
-        System.out.print("REDUCER: term '" + term + "' is found in the following docs: ");
-
-        Map<Integer, Integer> termFreqs = new HashMap<Integer, Integer>();
-        for (IntWritable docNo : docNos)
-        {
-          System.out.print(docNo + " ");
-          Integer pojoDocNo = docNo.get();
-          Integer oldTf = termFreqs.get(pojoDocNo);
-          if (oldTf == null)
-          {
-            termFreqs.put(pojoDocNo, 1);
-          } else
-          {
-            termFreqs.put(pojoDocNo, oldTf+1);
-          }
-        }
-        System.out.print("\n");
-
-        List<Integer> sortedDocNos = new ArrayList<Integer>();
-        sortedDocNos.addAll(termFreqs.keySet());
-        Collections.sort(sortedDocNos);
-        StringBuilder sb = new StringBuilder();
-        Integer df = sortedDocNos.size();
-        sb.append(": ").append(df).append(" : ");
-        Integer doc;
-        for (int i = 0; i < sortedDocNos.size(); i++)
-        {
-          doc = sortedDocNos.get(i);
-          sb.append("(").append(doc).append(",").append(termFreqs.get(doc)).append(")");
-          if (i + 1 < sortedDocNos.size())
-          {
-            sb.append(", ");
-          }
-        }
-
-        context.write(term, new Text(sb.toString()));
-      }
-    }
+    context.write(term, new Text(sb.toString()));
+  }
 }
