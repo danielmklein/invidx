@@ -2,8 +2,8 @@
 / building and running:
 / $ HADOOP_CLASSPATH="$(hadoop classpath)"
 / $ mkdir invidx_classes
-/ $ javac -classpath ${HADOOP_CLASSPATH} -d invidx_classes *.java
-/ $ jar -cvf /home/hadoop/InvIdx.jar -C invidx_classes/ .
+/ $ javac -classpath ${HADOOP_CLASSPATH} -d invidx_classes InvIdx.java
+/ $ jar -cvf ./InvIdx.jar -C invidx_classes/ .
 /
 / $ hadoop jar ./InvIdx.jar InvIdx <term>
 **/
@@ -29,7 +29,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
@@ -126,7 +125,6 @@ public class InvIdx extends Configured implements Tool {
         } catch (IOException e) {}
       }
       System.out.println("DRIVER: finished writing local input file to HDFS.");
-
     }
 
     /*
@@ -295,7 +293,6 @@ class InvIdxReduce extends Reducer<Text, IntWritable, Text, Text>
         sb.append(", ");
       }
     }
-
     context.write(term, new Text(sb.toString()));
   }
 }
